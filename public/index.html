@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vercel 人员列表</title>
+  <title>Vercel 人员能力扩展</title>
   <style>
     :root {
       color-scheme: light;
@@ -105,6 +105,78 @@
       box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
     }
 
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      background: #fff;
+      color: #111827;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .summary-card {
+      padding: 18px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #eef2ff 0%, #ffffff 100%);
+      border: 1px solid #e5e7eb;
+    }
+
+    .summary-card strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .summary-card span {
+      color: #4b5563;
+      font-size: 14px;
+    }
+
+    .empty {
+      padding: 28px;
+      text-align: center;
+      border-radius: 18px;
+      border: 1px dashed #cbd5e1;
+      color: #64748b;
+      background: #f8fafc;
+    }
+
     .status {
       display: flex;
       align-items: center;
@@ -196,10 +268,10 @@
   <main class="container">
     <section class="hero">
       <span class="eyebrow">Deploy Ready for Vercel</span>
-      <h1>人员列表展示页</h1>
+      <h1>人员列表能力扩展示例</h1>
       <p class="description">
-        当前页面会直接调用同项目中的 Serverless API，并把接口返回的人员列表渲染出来。
-        部署到 Vercel 后，首页和接口可以一起工作，不需要额外启动 Java 服务。
+        当前页面会直接调用同项目中的 Serverless API，支持姓名筛选、部门过滤、年龄区间、排序和结果限制，
+        同时展示当前结果集的统计信息。
       </p>
       <div class="toolbar">
         <button id="refreshButton" class="primary" type="button">刷新数据</button>
@@ -208,10 +280,55 @@
     </section>
 
     <section class="panel">
+      <div class="filters">
+        <div class="field">
+          <label for="nameInput">姓名关键字</label>
+          <input id="nameInput" type="text" placeholder="例如：张">
+        </div>
+        <div class="field">
+          <label for="departmentSelect">部门</label>
+          <select id="departmentSelect">
+            <option value="">全部部门</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="minAgeInput">最小年龄</label>
+          <input id="minAgeInput" type="number" min="0" placeholder="例如：26">
+        </div>
+        <div class="field">
+          <label for="maxAgeInput">最大年龄</label>
+          <input id="maxAgeInput" type="number" min="0" placeholder="例如：32">
+        </div>
+        <div class="field">
+          <label for="sortBySelect">排序字段</label>
+          <select id="sortBySelect">
+            <option value="id">编号</option>
+            <option value="name">姓名</option>
+            <option value="age">年龄</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="orderSelect">排序方向</label>
+          <select id="orderSelect">
+            <option value="asc">升序</option>
+            <option value="desc">降序</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="limitSelect">结果条数</label>
+          <select id="limitSelect">
+            <option value="">全部</option>
+            <option value="1">1 条</option>
+            <option value="2">2 条</option>
+            <option value="3">3 条</option>
+          </select>
+        </div>
+      </div>
       <div class="status">
         <span id="statusDot" class="dot loading"></span>
         <span id="statusText">正在加载接口数据...</span>
       </div>
+      <div id="summary" class="summary"></div>
       <div id="cards" class="cards"></div>
       <div class="api-preview">
         <header>接口响应预览</header>
@@ -224,15 +341,52 @@
     const refreshButton = document.getElementById('refreshButton');
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
+    const summary = document.getElementById('summary');
     const cards = document.getElementById('cards');
     const payload = document.getElementById('payload');
+    const nameInput = document.getElementById('nameInput');
+    const departmentSelect = document.getElementById('departmentSelect');
+    const minAgeInput = document.getElementById('minAgeInput');
+    const maxAgeInput = document.getElementById('maxAgeInput');
+    const sortBySelect = document.getElementById('sortBySelect');
+    const orderSelect = document.getElementById('orderSelect');
+    const limitSelect = document.getElementById('limitSelect');
 
     function setStatus(type, text) {
       statusDot.className = `dot ${type}`;
       statusText.textContent = text;
     }
 
+    function renderSummary(result) {
+      const stats = result.stats || {};
+      const departments = (stats.departments || []).join('、') || '暂无';
+
+      summary.innerHTML = `
+        <article class="summary-card">
+          <span>当前结果数</span>
+          <strong>${result.total || 0}</strong>
+        </article>
+        <article class="summary-card">
+          <span>平均年龄</span>
+          <strong>${stats.averageAge ?? 0}</strong>
+        </article>
+        <article class="summary-card">
+          <span>年龄范围</span>
+          <strong>${stats.youngestAge ?? 0} - ${stats.oldestAge ?? 0}</strong>
+        </article>
+        <article class="summary-card">
+          <span>涉及部门</span>
+          <strong style="font-size: 16px; line-height: 1.5;">${departments}</strong>
+        </article>
+      `;
+    }
+
     function renderCards(people) {
+      if (!people.length) {
+        cards.innerHTML = '<div class="empty">当前筛选条件下没有匹配人员</div>';
+        return;
+      }
+
       cards.innerHTML = people
         .map(
           (person) => `
@@ -247,12 +401,55 @@
         .join('');
     }
 
+    function buildQuery() {
+      const params = new URLSearchParams();
+
+      if (nameInput.value.trim()) {
+        params.set('name', nameInput.value.trim());
+      }
+      if (departmentSelect.value) {
+        params.set('department', departmentSelect.value);
+      }
+      if (minAgeInput.value) {
+        params.set('minAge', minAgeInput.value);
+      }
+      if (maxAgeInput.value) {
+        params.set('maxAge', maxAgeInput.value);
+      }
+      if (sortBySelect.value) {
+        params.set('sortBy', sortBySelect.value);
+      }
+      if (orderSelect.value) {
+        params.set('order', orderSelect.value);
+      }
+      if (limitSelect.value) {
+        params.set('limit', limitSelect.value);
+      }
+
+      return params.toString();
+    }
+
+    function syncDepartmentOptions(result) {
+      const departments = result.stats?.departments || [];
+      const currentValue = departmentSelect.value;
+
+      departmentSelect.innerHTML = [
+        '<option value="">全部部门</option>',
+        ...departments.map((department) => `<option value="${department}">${department}</option>`)
+      ].join('');
+
+      if (departments.includes(currentValue)) {
+        departmentSelect.value = currentValue;
+      }
+    }
+
     async function loadPeople() {
       setStatus('loading', '正在加载接口数据...');
       refreshButton.disabled = true;
 
       try {
-        const response = await fetch('/persons', {
+        const query = buildQuery();
+        const response = await fetch(`/persons${query ? `?${query}` : ''}`, {
           headers: {
             Accept: 'application/json'
           }
@@ -263,10 +460,13 @@
         }
 
         const result = await response.json();
+        syncDepartmentOptions(result);
+        renderSummary(result);
         renderCards(result.data || []);
         payload.textContent = JSON.stringify(result, null, 2);
         setStatus('success', `加载成功，共 ${result.total || 0} 条数据`);
       } catch (error) {
+        summary.innerHTML = '';
         cards.innerHTML = '';
         payload.textContent = error.message;
         setStatus('error', '加载失败，请稍后重试');
@@ -276,6 +476,11 @@
     }
 
     refreshButton.addEventListener('click', loadPeople);
+    [nameInput, departmentSelect, minAgeInput, maxAgeInput, sortBySelect, orderSelect, limitSelect]
+      .forEach((element) => {
+        element.addEventListener('change', loadPeople);
+      });
+    nameInput.addEventListener('input', loadPeople);
     loadPeople();
   </script>
 </body>
