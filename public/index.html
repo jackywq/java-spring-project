@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vercel 人员列表</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f5f7fb 0%, #eef3ff 100%);
+    }
+
+    .container {
+      width: min(960px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0 64px;
+    }
+
+    .hero {
+      padding: 32px;
+      border-radius: 24px;
+      background: #ffffffcc;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #e0e7ff;
+      color: #3730a3;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    h1 {
+      margin: 16px 0 12px;
+      font-size: clamp(32px, 4vw, 46px);
+      line-height: 1.1;
+    }
+
+    .description {
+      margin: 0;
+      max-width: 640px;
+      color: #4b5563;
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    button,
+    .link-button {
+      appearance: none;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+
+    button:hover,
+    .link-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      background: #111827;
+      color: #fff;
+      box-shadow: 0 16px 30px rgba(17, 24, 39, 0.18);
+    }
+
+    .secondary {
+      background: #fff;
+      color: #111827;
+      box-shadow: inset 0 0 0 1px #d1d5db;
+    }
+
+    .panel {
+      margin-top: 28px;
+      padding: 24px;
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      color: #4b5563;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #9ca3af;
+    }
+
+    .dot.loading {
+      background: #f59e0b;
+    }
+
+    .dot.success {
+      background: #10b981;
+    }
+
+    .dot.error {
+      background: #ef4444;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      padding: 20px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border: 1px solid #e5e7eb;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 22px;
+    }
+
+    .meta {
+      margin: 6px 0;
+      color: #4b5563;
+      font-size: 15px;
+    }
+
+    .api-preview {
+      margin-top: 22px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+
+    .api-preview header {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 14px;
+      color: #cbd5e1;
+    }
+
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding-top: 24px;
+      }
+
+      .hero,
+      .panel {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <span class="eyebrow">Deploy Ready for Vercel</span>
+      <h1>人员列表展示页</h1>
+      <p class="description">
+        当前页面会直接调用同项目中的 Serverless API，并把接口返回的人员列表渲染出来。
+        部署到 Vercel 后，首页和接口可以一起工作，不需要额外启动 Java 服务。
+      </p>
+      <div class="toolbar">
+        <button id="refreshButton" class="primary" type="button">刷新数据</button>
+        <a class="link-button secondary" href="/persons" target="_blank" rel="noreferrer">打开接口</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="status">
+        <span id="statusDot" class="dot loading"></span>
+        <span id="statusText">正在加载接口数据...</span>
+      </div>
+      <div id="cards" class="cards"></div>
+      <div class="api-preview">
+        <header>接口响应预览</header>
+        <pre id="payload"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const refreshButton = document.getElementById('refreshButton');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const cards = document.getElementById('cards');
+    const payload = document.getElementById('payload');
+
+    function setStatus(type, text) {
+      statusDot.className = `dot ${type}`;
+      statusText.textContent = text;
+    }
+
+    function renderCards(people) {
+      cards.innerHTML = people
+        .map(
+          (person) => `
+            <article class="card">
+              <h2>${person.name}</h2>
+              <p class="meta">编号：${person.id}</p>
+              <p class="meta">年龄：${person.age}</p>
+              <p class="meta">部门：${person.department}</p>
+            </article>
+          `
+        )
+        .join('');
+    }
+
+    async function loadPeople() {
+      setStatus('loading', '正在加载接口数据...');
+      refreshButton.disabled = true;
+
+      try {
+        const response = await fetch('/persons', {
+          headers: {
+            Accept: 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`请求失败：${response.status}`);
+        }
+
+        const result = await response.json();
+        renderCards(result.data || []);
+        payload.textContent = JSON.stringify(result, null, 2);
+        setStatus('success', `加载成功，共 ${result.total || 0} 条数据`);
+      } catch (error) {
+        cards.innerHTML = '';
+        payload.textContent = error.message;
+        setStatus('error', '加载失败，请稍后重试');
+      } finally {
+        refreshButton.disabled = false;
+      }
+    }
+
+    refreshButton.addEventListener('click', loadPeople);
+    loadPeople();
+  </script>
+</body>
+</html>
