@@ -3,485 +3,1010 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vercel 人员能力扩展</title>
+  <title>人事管理系统 · 人员总览</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    /* ═══════════════════════════════════════════
+       DESIGN TOKENS
+       ═══════════════════════════════════════════ */
     :root {
-      color-scheme: light;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f5f7fb;
-      color: #1f2937;
+      --bg: #FAF7F2;
+      --bg-warm: #F5F0E8;
+      --surface: #FFFFFF;
+      --ink: #1A1A2E;
+      --ink-soft: #3D3D56;
+      --ink-muted: #7A7A8E;
+      --amber: #C8860A;
+      --amber-light: #F5D98A;
+      --amber-glow: rgba(200, 134, 10, 0.12);
+      --terracotta: #B85C38;
+      --sage: #6B8F71;
+      --sage-light: #E8F0E9;
+      --border: rgba(26, 26, 46, 0.08);
+      --border-strong: rgba(26, 26, 46, 0.15);
+      --shadow-sm: 0 1px 3px rgba(26, 26, 46, 0.04), 0 1px 2px rgba(26, 26, 46, 0.06);
+      --shadow-md: 0 4px 16px rgba(26, 26, 46, 0.06), 0 2px 4px rgba(26, 26, 46, 0.04);
+      --shadow-lg: 0 12px 40px rgba(26, 26, 46, 0.08), 0 4px 12px rgba(26, 26, 46, 0.04);
+      --shadow-amber: 0 8px 30px rgba(200, 134, 10, 0.15);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-lg: 24px;
+      --font-serif: 'Noto Serif SC', 'Songti SC', serif;
+      --font-sans: 'Noto Sans SC', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    /* ═══════════════════════════════════════════
+       RESET & BASE
+       ═══════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      margin: 0;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--ink);
       min-height: 100vh;
-      background: linear-gradient(180deg, #f5f7fb 0%, #eef3ff 100%);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .container {
-      width: min(960px, calc(100% - 32px));
+    /* Grain texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 200px;
+    }
+
+    /* ═══════════════════════════════════════════
+       LAYOUT
+       ═══════════════════════════════════════════ */
+    .page {
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 48px 0 64px;
+      padding: 0 32px;
     }
 
+    /* ═══════════════════════════════════════════
+       HERO SECTION
+       ═══════════════════════════════════════════ */
     .hero {
-      padding: 32px;
-      border-radius: 24px;
-      background: #ffffffcc;
-      backdrop-filter: blur(16px);
-      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+      padding: 72px 0 48px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .eyebrow {
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -60%;
+      right: -20%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, var(--amber-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
       display: inline-flex;
-      padding: 6px 12px;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
       border-radius: 999px;
-      background: #e0e7ff;
-      color: #3730a3;
-      font-size: 14px;
-      font-weight: 600;
+      background: var(--ink);
+      color: var(--amber-light);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      animation: fadeSlideUp 0.6s ease both;
     }
 
-    h1 {
-      margin: 16px 0 12px;
-      font-size: clamp(32px, 4vw, 46px);
-      line-height: 1.1;
+    .hero-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+      animation: pulse 2s ease infinite;
     }
 
-    .description {
-      margin: 0;
-      max-width: 640px;
-      color: #4b5563;
-      font-size: 16px;
-      line-height: 1.75;
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
     }
 
-    .toolbar {
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: clamp(40px, 5.5vw, 64px);
+      font-weight: 900;
+      line-height: 1.15;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+      animation: fadeSlideUp 0.6s ease 0.1s both;
+    }
+
+    .hero-title .accent {
+      color: var(--amber);
+      position: relative;
+    }
+
+    .hero-title .accent::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--amber-light);
+      border-radius: 2px;
+    }
+
+    .hero-subtitle {
+      font-size: 17px;
+      color: var(--ink-muted);
+      max-width: 560px;
+      line-height: 1.8;
+      font-weight: 300;
+      animation: fadeSlideUp 0.6s ease 0.2s both;
+    }
+
+    .hero-actions {
       display: flex;
       gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 24px;
+      margin-top: 32px;
+      animation: fadeSlideUp 0.6s ease 0.3s both;
     }
 
-    button,
-    .link-button {
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ═══════════════════════════════════════════
+       BUTTONS
+       ═══════════════════════════════════════════ */
+    .btn {
       appearance: none;
-      border: 0;
-      border-radius: 14px;
-      padding: 12px 18px;
-      font-size: 15px;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px 24px;
+      font-family: var(--font-sans);
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       text-decoration: none;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    button:hover,
-    .link-button:hover {
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: var(--ink);
+      color: #fff;
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--ink-soft);
+      box-shadow: var(--shadow-lg);
       transform: translateY(-1px);
     }
 
-    .primary {
-      background: #111827;
-      color: #fff;
-      box-shadow: 0 16px 30px rgba(17, 24, 39, 0.18);
+    .btn-ghost {
+      background: transparent;
+      color: var(--ink-soft);
+      border: 1.5px solid var(--border-strong);
     }
 
-    .secondary {
-      background: #fff;
-      color: #111827;
-      box-shadow: inset 0 0 0 1px #d1d5db;
+    .btn-ghost:hover:not(:disabled) {
+      border-color: var(--ink);
+      color: var(--ink);
+      background: rgba(26, 26, 46, 0.02);
     }
 
-    .panel {
-      margin-top: 28px;
-      padding: 24px;
-      border-radius: 20px;
-      background: #fff;
-      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+    /* ═══════════════════════════════════════════
+       FILTER PANEL
+       ═══════════════════════════════════════════ */
+    .filter-panel {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+      animation: fadeSlideUp 0.6s ease 0.4s both;
     }
 
-    .filters {
+    .filter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .filter-header h2 {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .filter-header .result-count {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--ink-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--sage);
+      transition: background 0.3s;
+    }
+
+    .result-dot.loading { background: var(--amber); animation: pulse 1.5s ease infinite; }
+    .result-dot.error { background: var(--terracotta); }
+
+    .filter-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
     }
 
-    .field {
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .filter-group input,
+    .filter-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 400;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .filter-group select {
+      background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%237A7A8E' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+      border-color: var(--amber);
+      box-shadow: 0 0 0 3px var(--amber-glow);
+    }
+
+    .filter-group input::placeholder {
+      color: var(--ink-muted);
+      font-weight: 300;
+    }
+
+    /* ═══════════════════════════════════════════
+       STATS CARDS
+       ═══════════════════════════════════════════ */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+      animation: fadeSlideUp 0.6s ease 0.5s both;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: 3px 3px 0 0;
+    }
+
+    .stat-card:nth-child(1)::before { background: var(--amber); }
+    .stat-card:nth-child(2)::before { background: var(--sage); }
+    .stat-card:nth-child(3)::before { background: var(--terracotta); }
+    .stat-card:nth-child(4)::before { background: var(--ink); }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: var(--font-serif);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+
+    .stat-value.small {
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .stat-detail {
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════
+       EMPLOYEE CARDS
+       ═══════════════════════════════════════════ */
+    .results-section {
+      animation: fadeSlideUp 0.6s ease 0.6s both;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-header h2 {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .section-header .count-badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: var(--amber-glow);
+      color: var(--amber);
+      font-weight: 500;
+    }
+
+    .employee-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .employee-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .employee-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--border-strong);
+    }
+
+    .employee-card .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .employee-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .employee-id {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-muted);
+      background: var(--bg);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .employee-name {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .employee-position {
+      font-size: 13px;
+      color: var(--amber);
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    .employee-meta {
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
 
-    .field label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #374151;
-    }
-
-    .field input,
-    .field select {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid #d1d5db;
-      border-radius: 14px;
-      background: #fff;
-      color: #111827;
-      font-size: 14px;
-      outline: none;
-    }
-
-    .field input:focus,
-    .field select:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
-    }
-
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
-    }
-
-    .summary-card {
-      padding: 18px;
-      border-radius: 18px;
-      background: linear-gradient(180deg, #eef2ff 0%, #ffffff 100%);
-      border: 1px solid #e5e7eb;
-    }
-
-    .summary-card strong {
-      display: block;
-      margin-top: 8px;
-      font-size: 28px;
-      line-height: 1;
-    }
-
-    .summary-card span {
-      color: #4b5563;
-      font-size: 14px;
-    }
-
-    .empty {
-      padding: 28px;
-      text-align: center;
-      border-radius: 18px;
-      border: 1px dashed #cbd5e1;
-      color: #64748b;
-      background: #f8fafc;
-    }
-
-    .status {
+    .meta-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 18px;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+
+    .meta-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .meta-label {
+      color: var(--ink-muted);
+      font-size: 11px;
+      min-width: 32px;
+    }
+
+    .meta-value {
+      font-weight: 500;
+    }
+
+    .dept-tag {
+      display: inline-flex;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--sage-light);
+      color: var(--sage);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 64px 32px;
+      border-radius: var(--radius-lg);
+      border: 2px dashed var(--border);
+      background: var(--bg-warm);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+
+    .empty-state h3 {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      color: var(--ink-soft);
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      color: var(--ink-muted);
       font-size: 14px;
-      color: #4b5563;
     }
 
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #9ca3af;
+    /* ═══════════════════════════════════════════
+       API PREVIEW
+       ══════════════════════════════════════════ */
+    .api-section {
+      margin-top: 32px;
+      margin-bottom: 64px;
+      animation: fadeSlideUp 0.6s ease 0.7s both;
     }
 
-    .dot.loading {
-      background: #f59e0b;
+    .api-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      background: none;
+      border: none;
+      font-family: var(--font-sans);
+      padding: 8px 0;
+      transition: color 0.2s;
     }
 
-    .dot.success {
-      background: #10b981;
+    .api-toggle:hover { color: var(--ink); }
+
+    .api-toggle .chevron {
+      transition: transform 0.3s;
+      font-size: 12px;
     }
 
-    .dot.error {
-      background: #ef4444;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-    }
-
-    .card {
-      padding: 20px;
-      border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-      border: 1px solid #e5e7eb;
-    }
-
-    .card h2 {
-      margin: 0 0 10px;
-      font-size: 22px;
-    }
-
-    .meta {
-      margin: 6px 0;
-      color: #4b5563;
-      font-size: 15px;
-    }
+    .api-toggle.open .chevron { transform: rotate(90deg); }
 
     .api-preview {
-      margin-top: 22px;
-      border-radius: 18px;
+      margin-top: 12px;
+      border-radius: var(--radius);
       overflow: hidden;
-      background: #0f172a;
-      color: #e5e7eb;
+      background: var(--ink);
+      display: none;
     }
 
-    .api-preview header {
-      padding: 14px 18px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-      font-size: 14px;
-      color: #cbd5e1;
+    .api-preview.visible { display: block; }
+
+    .api-preview-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    pre {
-      margin: 0;
-      padding: 18px;
-      overflow: auto;
-      font-size: 14px;
-      line-height: 1.6;
+    .api-preview-header .dot-red { width: 10px; height: 10px; border-radius: 50%; background: #FF5F57; }
+    .api-preview-header .dot-yellow { width: 10px; height: 10px; border-radius: 50%; background: #FFBD2E; }
+    .api-preview-header .dot-green { width: 10px; height: 10px; border-radius: 50%; background: #28CA42; }
+
+    .api-preview pre {
+      padding: 20px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      color: #A5D6FF;
+      max-height: 400px;
+    }
+
+    .api-preview pre::-webkit-scrollbar { width: 6px; height: 6px; }
+    .api-preview pre::-webkit-scrollbar-track { background: transparent; }
+    .api-preview pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ═══════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════ */
+    .footer {
+      text-align: center;
+      padding: 32px 0 48px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+
+    .footer a {
+      color: var(--amber);
+      text-decoration: none;
+    }
+
+    .footer a:hover { text-decoration: underline; }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE
+       ═══════════════════════════════════════════ */
+    @media (max-width: 900px) {
+      .filter-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
     }
 
     @media (max-width: 640px) {
-      .container {
-        padding-top: 24px;
-      }
+      .page { padding: 0 16px; }
+      .hero { padding: 40px 0 32px; }
+      .filter-panel { padding: 20px; }
+      .filter-grid { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .employee-grid { grid-template-columns: 1fr; }
+    }
 
-      .hero,
-      .panel {
-        padding: 20px;
-      }
+    /* ═══════════════════════════════════════════
+       CARD STAGGER ANIMATION
+       ═══════════════════════════════════════════ */
+    .employee-card {
+      opacity: 0;
+      animation: cardIn 0.4s ease forwards;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <main class="container">
+  <main class="page">
+    <!-- ══ HERO ═══ -->
     <section class="hero">
-      <span class="eyebrow">Deploy Ready for Vercel</span>
-      <h1>人员列表能力扩展示例</h1>
-      <p class="description">
-        当前页面会直接调用同项目中的 Serverless API，支持姓名筛选、部门过滤、年龄区间、排序和结果限制，
-        同时展示当前结果集的统计信息。
+      <div class="hero-badge">HR Management System</div>
+      <h1 class="hero-title">人事<span class="accent">管理</span>系统</h1>
+      <p class="hero-subtitle">
+        支持姓名模糊搜索、部门精确筛选、年龄区间过滤、多维排序与结果限制，
+        实时展示筛选结果集的统计概览。
       </p>
-      <div class="toolbar">
-        <button id="refreshButton" class="primary" type="button">刷新数据</button>
-        <a class="link-button secondary" href="/persons" target="_blank" rel="noreferrer">打开接口</a>
+      <div class="hero-actions">
+        <button id="refreshBtn" class="btn btn-primary" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          刷新数据
+        </button>
+        <a class="btn btn-ghost" href="/api/employees" target="_blank" rel="noreferrer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          查看接口
+        </a>
       </div>
     </section>
 
-    <section class="panel">
-      <div class="filters">
-        <div class="field">
+    <!-- ═══ FILTER PANEL ═══ -->
+    <section class="filter-panel">
+      <div class="filter-header">
+        <h2>筛选条件</h2>
+        <div class="result-count">
+          <span id="resultDot" class="result-dot loading"></span>
+          <span id="resultText">正在加载...</span>
+        </div>
+      </div>
+      <div class="filter-grid">
+        <div class="filter-group">
           <label for="nameInput">姓名关键字</label>
           <input id="nameInput" type="text" placeholder="例如：张">
         </div>
-        <div class="field">
-          <label for="departmentSelect">部门</label>
-          <select id="departmentSelect">
+        <div class="filter-group">
+          <label for="deptSelect">部门</label>
+          <select id="deptSelect">
             <option value="">全部部门</option>
           </select>
         </div>
-        <div class="field">
+        <div class="filter-group">
           <label for="minAgeInput">最小年龄</label>
-          <input id="minAgeInput" type="number" min="0" placeholder="例如：26">
+          <input id="minAgeInput" type="number" min="0" max="80" placeholder="例如：26">
         </div>
-        <div class="field">
+        <div class="filter-group">
           <label for="maxAgeInput">最大年龄</label>
-          <input id="maxAgeInput" type="number" min="0" placeholder="例如：32">
+          <input id="maxAgeInput" type="number" min="0" max="80" placeholder="例如：32">
         </div>
-        <div class="field">
+        <div class="filter-group">
           <label for="sortBySelect">排序字段</label>
           <select id="sortBySelect">
             <option value="id">编号</option>
             <option value="name">姓名</option>
             <option value="age">年龄</option>
+            <option value="hireDate">入职日期</option>
           </select>
         </div>
-        <div class="field">
+        <div class="filter-group">
           <label for="orderSelect">排序方向</label>
           <select id="orderSelect">
-            <option value="asc">升序</option>
-            <option value="desc">降序</option>
+            <option value="asc">升序 ↑</option>
+            <option value="desc">降序 ↓</option>
           </select>
         </div>
-        <div class="field">
+        <div class="filter-group">
           <label for="limitSelect">结果条数</label>
           <select id="limitSelect">
             <option value="">全部</option>
-            <option value="1">1 条</option>
-            <option value="2">2 条</option>
-            <option value="3">3 条</option>
+            <option value="5">5 条</option>
+            <option value="10">10 条</option>
+            <option value="20">20 条</option>
           </select>
         </div>
       </div>
-      <div class="status">
-        <span id="statusDot" class="dot loading"></span>
-        <span id="statusText">正在加载接口数据...</span>
+    </section>
+
+    <!-- ═══ STATS ═══ -->
+    <section class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-label">当前结果数</div>
+        <div class="stat-value" id="statCount">—</div>
+        <div class="stat-detail">筛选后总条数</div>
       </div>
-      <div id="summary" class="summary"></div>
-      <div id="cards" class="cards"></div>
-      <div class="api-preview">
-        <header>接口响应预览</header>
-        <pre id="payload"></pre>
+      <div class="stat-card">
+        <div class="stat-label">平均年龄</div>
+        <div class="stat-value" id="statAvg">—</div>
+        <div class="stat-detail">岁</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">年龄范围</div>
+        <div class="stat-value small" id="statRange">—</div>
+        <div class="stat-detail">最小 ~ 最大</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">涉及部门</div>
+        <div class="stat-value small" id="statDepts">—</div>
+        <div class="stat-detail">个部门</div>
       </div>
     </section>
+
+    <!-- ═══ EMPLOYEE CARDS ═══ -->
+    <section class="results-section">
+      <div class="section-header">
+        <h2>人员列表</h2>
+        <span class="count-badge" id="listBadge">0 人</span>
+      </div>
+      <div class="employee-grid" id="employeeGrid"></div>
+    </section>
+
+    <!-- ═══ API PREVIEW ═══ -->
+    <section class="api-section">
+      <button class="api-toggle" id="apiToggle" type="button">
+        <span class="chevron">▶</span> 接口响应预览
+      </button>
+      <div class="api-preview" id="apiPreview">
+        <div class="api-preview-header">
+          <span class="dot-red"></span>
+          <span class="dot-yellow"></span>
+          <span class="dot-green"></span>
+        </div>
+        <pre id="apiPayload"></pre>
+      </div>
+    </section>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="footer">
+      人事管理系统 · 基于 Spring Boot 构建 · <a href="/api/departments" target="_blank">部门接口</a>
+    </footer>
   </main>
 
   <script>
-    const refreshButton = document.getElementById('refreshButton');
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
-    const summary = document.getElementById('summary');
-    const cards = document.getElementById('cards');
-    const payload = document.getElementById('payload');
-    const nameInput = document.getElementById('nameInput');
-    const departmentSelect = document.getElementById('departmentSelect');
-    const minAgeInput = document.getElementById('minAgeInput');
-    const maxAgeInput = document.getElementById('maxAgeInput');
-    const sortBySelect = document.getElementById('sortBySelect');
-    const orderSelect = document.getElementById('orderSelect');
-    const limitSelect = document.getElementById('limitSelect');
+    /* ═══════════════════════════════════════════
+       AVATAR COLORS
+       ═══════════════════════════════════════════ */
+    const AVATAR_COLORS = [
+      '#C8860A', '#B85C38', '#6B8F71', '#4A6FA5',
+      '#8B5E83', '#2D7D7B', '#A0522D', '#5B7FA5',
+      '#7B6B8D', '#6B8E6B', '#C47A5A', '#5A7D8B'
+    ];
 
+    function avatarColor(name) {
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+    }
+
+    /* ═══════════════════════════════════════════
+       DOM REFS
+       ═══════════════════════════════════════════ */
+    const $ = (id) => document.getElementById(id);
+    const refreshBtn = $('refreshBtn');
+    const resultDot = $('resultDot');
+    const resultText = $('resultText');
+    const employeeGrid = $('employeeGrid');
+    const apiPayload = $('apiPayload');
+    const apiToggle = $('apiToggle');
+    const apiPreview = $('apiPreview');
+
+    const nameInput = $('nameInput');
+    const deptSelect = $('deptSelect');
+    const minAgeInput = $('minAgeInput');
+    const maxAgeInput = $('maxAgeInput');
+    const sortBySelect = $('sortBySelect');
+    const orderSelect = $('orderSelect');
+    const limitSelect = $('limitSelect');
+
+    /* ═══════════════════════════════════════════
+       API TOGGLE
+       ═══════════════════════════════════════════ */
+    apiToggle.addEventListener('click', () => {
+      apiToggle.classList.toggle('open');
+      apiPreview.classList.toggle('visible');
+    });
+
+    /* ═══════════════════════════════════════════
+       STATUS
+       ═══════════════════════════════════════════ */
     function setStatus(type, text) {
-      statusDot.className = `dot ${type}`;
-      statusText.textContent = text;
+      resultDot.className = `result-dot ${type}`;
+      resultText.textContent = text;
     }
 
-    function renderSummary(result) {
-      const stats = result.stats || {};
-      const departments = (stats.departments || []).join('、') || '暂无';
-
-      summary.innerHTML = `
-        <article class="summary-card">
-          <span>当前结果数</span>
-          <strong>${result.total || 0}</strong>
-        </article>
-        <article class="summary-card">
-          <span>平均年龄</span>
-          <strong>${stats.averageAge ?? 0}</strong>
-        </article>
-        <article class="summary-card">
-          <span>年龄范围</span>
-          <strong>${stats.youngestAge ?? 0} - ${stats.oldestAge ?? 0}</strong>
-        </article>
-        <article class="summary-card">
-          <span>涉及部门</span>
-          <strong style="font-size: 16px; line-height: 1.5;">${departments}</strong>
-        </article>
-      `;
+    /* ═══════════════════════════════════════════
+       RENDER STATS
+       ═══════════════════════════════════════════ */
+    function renderStats(stats, total) {
+      $('statCount').textContent = stats.count ?? total ?? 0;
+      $('statAvg').textContent = stats.avgAge ?? 0;
+      $('statRange').textContent = `${stats.minAge ?? 0} ~ ${stats.maxAge ?? 0}`;
+      const deptCount = (stats.departments || []).length;
+      $('statDepts').textContent = deptCount;
+      $('statDepts').nextElementSibling.textContent = deptCount ? '个部门' : '暂无数据';
     }
 
+    /* ══════════════════════════════════════════
+       RENDER EMPLOYEE CARDS
+       ═══════════════════════════════════════════ */
     function renderCards(people) {
+      $('listBadge').textContent = `${people.length} 人`;
+
       if (!people.length) {
-        cards.innerHTML = '<div class="empty">当前筛选条件下没有匹配人员</div>';
+        employeeGrid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-icon">🔍</div>
+            <h3>未找到匹配人员</h3>
+            <p>请尝试调整筛选条件</p>
+          </div>`;
         return;
       }
 
-      cards.innerHTML = people
-        .map(
-          (person) => `
-            <article class="card">
-              <h2>${person.name}</h2>
-              <p class="meta">编号：${person.id}</p>
-              <p class="meta">年龄：${person.age}</p>
-              <p class="meta">部门：${person.department}</p>
-            </article>
-          `
-        )
-        .join('');
+      employeeGrid.innerHTML = people.map((p, i) => `
+        <article class="employee-card" style="animation-delay: ${i * 0.04}s">
+          <div class="card-top">
+            <div class="employee-avatar" style="background: ${avatarColor(p.name)}">${p.name[0]}</div>
+            <span class="employee-id">#${String(p.id).padStart(3, '0')}</span>
+          </div>
+          <div class="employee-name">${p.name}</div>
+          <div class="employee-position">${p.position}</div>
+          <div class="employee-meta">
+            <div class="meta-row">
+              <div class="meta-icon"></div>
+              <span class="dept-tag">${p.department}</span>
+            </div>
+            <div class="meta-row">
+              <div class="meta-icon">🎂</div>
+              <span class="meta-label">年龄</span>
+              <span class="meta-value">${p.age} 岁</span>
+            </div>
+            <div class="meta-row">
+              <div class="meta-icon">✉</div>
+              <span class="meta-label">邮箱</span>
+              <span class="meta-value" style="font-size:12px;color:var(--ink-muted)">${p.email}</span>
+            </div>
+            <div class="meta-row">
+              <div class="meta-icon">📅</div>
+              <span class="meta-label">入职</span>
+              <span class="meta-value">${p.hireDate}</span>
+            </div>
+          </div>
+        </article>
+      `).join('');
     }
 
+    /* ═══════════════════════════════════════════
+       SYNC DEPARTMENT OPTIONS
+       ═══════════════════════════════════════════ */
+    function syncDepartments(departments) {
+      const current = deptSelect.value;
+      deptSelect.innerHTML = [
+        '<option value="">全部部门</option>',
+        ...departments.map(d => `<option value="${d}">${d}</option>`)
+      ].join('');
+      if (departments.includes(current)) deptSelect.value = current;
+    }
+
+    /* ═══════════════════════════════════════════
+       BUILD QUERY
+       ═══════════════════════════════════════════ */
     function buildQuery() {
       const params = new URLSearchParams();
-
-      if (nameInput.value.trim()) {
-        params.set('name', nameInput.value.trim());
-      }
-      if (departmentSelect.value) {
-        params.set('department', departmentSelect.value);
-      }
-      if (minAgeInput.value) {
-        params.set('minAge', minAgeInput.value);
-      }
-      if (maxAgeInput.value) {
-        params.set('maxAge', maxAgeInput.value);
-      }
-      if (sortBySelect.value) {
-        params.set('sortBy', sortBySelect.value);
-      }
-      if (orderSelect.value) {
-        params.set('order', orderSelect.value);
-      }
-      if (limitSelect.value) {
-        params.set('limit', limitSelect.value);
-      }
-
+      if (nameInput.value.trim()) params.set('name', nameInput.value.trim());
+      if (deptSelect.value) params.set('department', deptSelect.value);
+      if (minAgeInput.value) params.set('minAge', minAgeInput.value);
+      if (maxAgeInput.value) params.set('maxAge', maxAgeInput.value);
+      if (sortBySelect.value) params.set('sortBy', sortBySelect.value);
+      if (orderSelect.value) params.set('sortOrder', orderSelect.value);
+      if (limitSelect.value) params.set('limit', limitSelect.value);
       return params.toString();
     }
 
-    function syncDepartmentOptions(result) {
-      const departments = result.stats?.departments || [];
-      const currentValue = departmentSelect.value;
-
-      departmentSelect.innerHTML = [
-        '<option value="">全部部门</option>',
-        ...departments.map((department) => `<option value="${department}">${department}</option>`)
-      ].join('');
-
-      if (departments.includes(currentValue)) {
-        departmentSelect.value = currentValue;
-      }
-    }
-
-    async function loadPeople() {
-      setStatus('loading', '正在加载接口数据...');
-      refreshButton.disabled = true;
+    /* ═══════════════════════════════════════════
+       LOAD DATA
+       ═══════════════════════════════════════════ */
+    async function loadData() {
+      setStatus('loading', '正在加载...');
+      refreshBtn.disabled = true;
 
       try {
         const query = buildQuery();
-        const response = await fetch(`/persons${query ? `?${query}` : ''}`, {
-          headers: {
-            Accept: 'application/json'
-          }
-        });
+        const url = `/api/employees${query ? '?' + query : ''}`;
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
 
-        if (!response.ok) {
-          throw new Error(`请求失败：${response.status}`);
-        }
+        if (!res.ok) throw new Error(`请求失败：${res.status}`);
 
-        const result = await response.json();
-        syncDepartmentOptions(result);
-        renderSummary(result);
-        renderCards(result.data || []);
-        payload.textContent = JSON.stringify(result, null, 2);
-        setStatus('success', `加载成功，共 ${result.total || 0} 条数据`);
-      } catch (error) {
-        summary.innerHTML = '';
-        cards.innerHTML = '';
-        payload.textContent = error.message;
+        const json = await res.json();
+        const { list, total, stats } = json.data;
+
+        syncDepartments(stats.departments || []);
+        renderStats(stats, total);
+        renderCards(list);
+        apiPayload.textContent = JSON.stringify(json, null, 2);
+        setStatus('success', `加载成功，共 ${total} 条数据`);
+      } catch (err) {
+        $('statCount').textContent = '—';
+        $('statAvg').textContent = '—';
+        $('statRange').textContent = '—';
+        $('statDepts').textContent = '—';
+        employeeGrid.innerHTML = '';
+        apiPayload.textContent = err.message;
         setStatus('error', '加载失败，请稍后重试');
       } finally {
-        refreshButton.disabled = false;
+        refreshBtn.disabled = false;
       }
     }
 
-    refreshButton.addEventListener('click', loadPeople);
-    [nameInput, departmentSelect, minAgeInput, maxAgeInput, sortBySelect, orderSelect, limitSelect]
-      .forEach((element) => {
-        element.addEventListener('change', loadPeople);
-      });
-    nameInput.addEventListener('input', loadPeople);
-    loadPeople();
+    /* ═══════════════════════════════════════════
+       EVENT BINDINGS
+       ═══════════════════════════════════════════ */
+    refreshBtn.addEventListener('click', loadData);
+
+    [deptSelect, minAgeInput, maxAgeInput, sortBySelect, orderSelect, limitSelect]
+      .forEach(el => el.addEventListener('change', loadData));
+
+    nameInput.addEventListener('input', debounce(loadData, 350));
+
+    function debounce(fn, ms) {
+      let timer;
+      return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+    }
+
+    // Initial load
+    loadData();
   </script>
 </body>
 </html>
